@@ -1,134 +1,93 @@
 import logging
-import asyncio
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters, ConversationHandler
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-import gspread
-from google.oauth2.service_account import Credentials
-import json
-from datetime import datetime, date
+from telegram.ext import Updater, CommandHandler
 import os
-import sys
-
-# Добавляем путь к корневой директории
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-try:
-    from config import BOT_TOKEN, SPREADSHEET_ID, SHEET_NAME, TIMEZONE, REMINDER_TIMES, LOG_LEVEL
-except ImportError:
-    print("❌ Создайте файл config.py на основе config.example.py и заполните настройки")
-    sys.exit(1)
 
 # Настройка логирования
 logging.basicConfig(
-    level=LOG_LEVEL,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/bot.log', encoding='utf-8'),
-        logging.StreamHandler()
-    ]
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Состояния для ConversationHandler
-GET_NAME = 1
+# Токен бота (ВАШ ТОКЕН!)
+BOT_TOKEN = "8246985665:AAGpHgRVwU3t8vHGwE1bfRxrGGgeJWwyAKA"
 
-class LunchPaymentBot:
-    def __init__(self):
-        self.user_data = self.load_json('data/user_data.json')
-        self.payment_data = self.load_json('data/payment_data.json')
-        self.setup_google_sheets()
-        
-    def setup_google_sheets(self):
-        """Настройка подключения к Google Sheets"""
-        try:
-            creds_file = "credentials/service_account_key.json"
-            if not os.path.exists(creds_file):
-                logger.error("❌ Файл с credentials не найден")
-                return None
-                
-            scopes = [
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"
-            ]
-            creds = Credentials.from_service_account_file(creds_file, scopes=scopes)
-            self.gc = gspread.authorize(creds)
-            self.spreadsheet = self.gc.open_by_key(SPREADSHEET_ID)
-            self.worksheet = self.spreadsheet.worksheet(SHEET_NAME)
-            logger.info("✅ Успешное подключение к Google Sheets")
-        except Exception as e:
-            logger.error(f"❌ Ошибка подключения к Google Sheets: {e}")
-
-    def load_json(self, filename):
-        """Загрузка JSON файла"""
-        try:
-            if os.path.exists(filename):
-                with open(filename, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-        except Exception as e:
-            logger.error(f"Ошибка загрузки {filename}: {e}")
-        return {}
-
-    def save_json(self, filename, data):
-        """Сохранение JSON файла"""
-        try:
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=4, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Ошибка сохранения {filename}: {e}")
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start(bot, update):
     """Обработчик команды /start"""
-    await update.message.reply_text(
-        "👋 Привет! Я бот для напоминаний об оплате обедов.\n"
-        "Используй /help для списка команд."
+    user = update.message.from_user
+    update.message.reply_text(
+        f"👋 Привет, {user.first_name}!\n"
+        f"✅ Бот работает на стабильной версии 12.8!\n"
+        f"Используй /help для списка команд."
     )
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def help_command(bot, update):
     """Обработчик команды /help"""
     help_text = """
 📋 Доступные команды:
 /start - Начать работу с ботом
 /help - Показать справку
-/register - Зарегистрировать ФИО
-/status - Проверить статус
-    """
-    await update.message.reply_text(help_text)
+/test - Проверить работу бота
+/info - Информация о боте
 
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+🚀 Версия: python-telegram-bot 12.8
+✅ Статус: Стабильная работа
+    """
+    update.message.reply_text(help_text)
+
+def test_command(bot, update):
+    """Тестовая команда"""
+    user = update.message.from_user
+    update.message.reply_text(
+        f"✅ Тест пройден успешно!\n"
+        f"👤 Ваш ID: {user.id}\n"
+        f"📝 Имя: {user.first_name}\n"
+        f"🔗 Username: @{user.username if user.username else 'не указан'}\n"
+        f"🎉 Бот работает стабильно!"
+    )
+
+def info_command(bot, update):
+    """Информация о боте"""
+    update.message.reply_text(
+        "🤖 Бот: Оплата обеда 'Простая кухня'\n"
+        "📚 Версия библиотеки: 12.8 (стабильная)\n"
+        "✅ Статус: Полностью рабочий\n"
+        "🚀 Следующий шаг: Подключение Google Sheets"
+    )
+
+def error_handler(bot, update, error):
     """Обработчик ошибок"""
-    logger.error(f"Ошибка: {context.error}")
+    logger.error(f"Ошибка: {error}")
 
 def main():
     """Основная функция запуска бота"""
     try:
-        logger.info("🚀 Запуск бота...")
+        logger.info("🚀 Запуск бота на проверенной версии 12.8...")
         
-        # Создание приложения
-        application = Application.builder().token(BOT_TOKEN).build()
+        # Создаем updater
+        updater = Updater(BOT_TOKEN)
+        dp = updater.dispatcher
         
-        # Добавление обработчиков
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(CommandHandler("help", help_command))
+        # Добавляем обработчики
+        dp.add_handler(CommandHandler("start", start))
+        dp.add_handler(CommandHandler("help", help_command))
+        dp.add_handler(CommandHandler("test", test_command))
+        dp.add_handler(CommandHandler("info", info_command))
         
         # Обработчик ошибок
-        application.add_error_handler(error_handler)
+        dp.add_error_handler(error_handler)
         
         logger.info("✅ Бот инициализирован. Запускаю поллинг...")
+        logger.info("📍 Отправьте боту /test для проверки")
         
-        # Запуск бота
-        application.run_polling()
+        # Запускаем бота
+        updater.start_polling()
+        logger.info("✅ Бот запущен и слушает сообщения...")
+        updater.idle()
         
     except Exception as e:
-        logger.error(f"❌ Критическая ошибка: {e}")
+        logger.error(f"❌ Ошибка: {e}")
         input("Нажмите Enter для выхода...")
 
 if __name__ == '__main__':
-    # Создаем необходимые директории
-    os.makedirs('data', exist_ok=True)
-    os.makedirs('logs', exist_ok=True)
-    os.makedirs('credentials', exist_ok=True)
-    
     main()
