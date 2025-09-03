@@ -1,0 +1,24 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Конфигурация
+config.py
+credentials/
+data/
+logs/
+
+# Google credentials
+*.json
+service_account_key.json
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
