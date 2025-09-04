@@ -1,0 +1,81 @@
+вќЊ Р‘РѕС‚ СѓРїР°Р»! РџРµСЂРµР·Р°РїСѓСЃРє: 04.09.2025 17:24:00,40 
+вќЊ Р‘РѕС‚ СѓРїР°Р»! РџРµСЂРµР·Р°РїСѓСЃРє: 04.09.2025 17:26:22,01 
+рџ“… Р—Р°РїСѓСЃРє Р±РѕС‚Р°: 04.09.2025 17:26:25,25 
+Traceback (most recent call last):
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 449, in <module>
+    main()
+    ~~~~^^
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 338, in main
+    print("\U0001f680 Умный бот запущен! С подтверждением оплаты.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pickles\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 0: character maps to <undefined>
+вЏ№пёЏ Р‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: 04.09.2025 17:26:25,59 
+рџ“… Р—Р°РїСѓСЃРє Р±РѕС‚Р°: 04.09.2025 17:26:37,09 
+Traceback (most recent call last):
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 449, in <module>
+    main()
+    ~~~~^^
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 338, in main
+    print("\U0001f680 Умный бот запущен! С подтверждением оплаты.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pickles\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 0: character maps to <undefined>
+вЏ№пёЏ Р‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: 04.09.2025 17:26:37,41 
+рџ“… Р—Р°РїСѓСЃРє Р±РѕС‚Р°: 04.09.2025 17:26:48,13 
+Traceback (most recent call last):
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 449, in <module>
+    main()
+    ~~~~^^
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 338, in main
+    print("\U0001f680 Умный бот запущен! С подтверждением оплаты.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pickles\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 0: character maps to <undefined>
+вЏ№пёЏ Р‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: 04.09.2025 17:26:48,44 
+рџ“… Р—Р°РїСѓСЃРє Р±РѕС‚Р°: 04.09.2025 17:29:51,27 
+Traceback (most recent call last):
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 449, in <module>
+    main()
+    ~~~~^^
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 338, in main
+    print("\U0001f680 Умный бот запущен! С подтверждением оплаты.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pickles\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 0: character maps to <undefined>
+вЏ№пёЏ Р‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: 04.09.2025 17:29:51,58 
+вќЊ Р‘РѕС‚ СѓРїР°Р»! РџРµСЂРµР·Р°РїСѓСЃРє: 04.09.2025 17:30:02,10 
+рџ“… Р—Р°РїСѓСЃРє Р±РѕС‚Р°: 04.09.2025 17:30:05,19 
+Traceback (most recent call last):
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 449, in <module>
+    main()
+    ~~~~^^
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 338, in main
+    print("\U0001f680 Умный бот запущен! С подтверждением оплаты.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pickles\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 0: character maps to <undefined>
+вЏ№пёЏ Р‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: 04.09.2025 17:30:05,49 
+рџ“… Р—Р°РїСѓСЃРє Р±РѕС‚Р°: 04.09.2025 17:31:20,22 
+Traceback (most recent call last):
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 449, in <module>
+    main()
+    ~~~~^^
+  File "D:\lunch_payment_bot\smart_final_bot.py", line 338, in main
+    print("\U0001f680 Умный бот запущен! С подтверждением оплаты.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pickles\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 0: character maps to <undefined>
+вЏ№пёЏ Р‘РѕС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: 04.09.2025 17:31:20,59 
