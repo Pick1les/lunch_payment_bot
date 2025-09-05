@@ -234,7 +234,7 @@ def get_welcome_message():
         "📋 *Список команд:*\n\n"
         "📍 */start* - показать это сообщение\n"
         "📍 */register* - регистрация в системе\n"
-        "📍 */payment* - реквизиты для оплаты\n"
+        "📍 */payment* - реквизиты для оплата\n"
         "📍 */checkorders* - проверить сегодняшние заказы\n"
         "📍 */mystatus* - мой статус оплаты\n\n"
         "⚡ *Как это работает:*\n"
@@ -245,14 +245,45 @@ def get_welcome_message():
         "💡 Бот автоматически проверяет заказы каждые 5 минут!"
     )
 
-def check_orders_and_notify(parser, user_data, payments_data):
-    """Проверяет заказы и отправляет уведомления"""
+def should_send_notification():
+    """Проверяет, можно ли отправлять уведомления в текущее время"""
+    now = datetime.now()
+    current_time = now.time()
+    
+    # Отправляем уведомления только между 10:20 и 14:00
+    start_time = datetime.strptime("10:20", "%H:%M").time()
+    end_time = datetime.strptime("14:00", "%H:%M").time()
+    
+    return start_time <= current_time <= end_time
+
+def is_price_valid(price_str):
+    """Проверяет что цена валидна и выставлена"""
+    if not price_str:
+        return False
+        
     try:
+        # Заменяем запятые на точки и преобразуем в число
+        price = float(price_str.replace(',', '.'))
+        # Цена должна быть больше 0
+        return price > 0
+    except (ValueError, TypeError):
+        return False
+
+def check_orders_and_notify(parser, user_data, payments_data):
+    """Проверяет заказы и отправляет уведомления ТОЛЬКО если цена выставлена"""
+    try:
+        # Проверяем время перед отправкой уведомлений
+        if not should_send_notification():
+            print("⏰ Сейчас не время для уведомлений (до 10:20 или после 14:00)")
+            return
+            
         orders = parser.get_todays_orders()
         notified_count = 0
         
         for order in orders:
-            if order['has_order']:
+            # Проверяем что заказ существует И цена выставлена
+            if (order['has_order'] and is_price_valid(order['price'])):
+                
                 # Проверяем не отправляли ли уже уведомление сегодня
                 today = datetime.now().strftime("%Y-%m-%d")
                 order_key = f"{order['fio']}_{today}"
@@ -286,6 +317,10 @@ def check_orders_and_notify(parser, user_data, payments_data):
                         notified_count += 1
                         print(f"📨 Отправлен заказ: {order['fio']} - {order['price']} руб.")
                         break
+            
+            elif order['has_order'] and (not is_price_valid(order['price'])):
+                # Логируем заказы без цены (для отладки)
+                print(f"⏳ Заказ без цены: {order['fio']} - ожидание выставления цены")
         
         save_data(PAYMENTS_FILE, payments_data)
         print(f"✅ Уведомления отправлены: {notified_count} пользователям")
@@ -403,7 +438,7 @@ def main():
                                 active_orders = len(orders)
                                 send_message(chat_id, f"📊 Заказов сегодня: {active_orders}")
                                 if active_orders > 0:
-                                    for order in orders[:3]:
+                                    for order in orders[:active_orders]:
                                         send_message(chat_id, f"• {order['fio']} - {order['price']} руб.")
                             else:
                                 send_message(chat_id, "❌ Таблица не подключена")
