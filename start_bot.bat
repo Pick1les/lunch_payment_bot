@@ -2,10 +2,11 @@
 chcp 65001 > nul
 title Lunch Payment Bot Server
 
-:: Создаем папку для логов если нет
+echo 🚀 Запуск Lunch Payment Bot Server...
+echo.
+
 if not exist logs mkdir logs
 
-:: Форматируем дату для имени файла
 for /f "tokens=1-3 delims=/" %%a in ("%date%") do (
     set day=%%a
     set month=%%b  
@@ -17,17 +18,30 @@ echo ======================================= >> %logfile%
 echo 🚀 Запуск бота: %date% %time% >> %logfile%
 echo ======================================= >> %logfile%
 
-:main_loop
-echo 🔄 Запуск бота... >> %logfile%
-python smart_final_bot.py >> %logfile% 2>&1
+:: Дублируем в консоль
+echo =======================================
+echo 🚀 Запуск бота: %date% %time%
+echo =======================================
 
-:: Анализ кода завершения
-if %errorlevel% equ 0 (
+:main_loop
+echo 🔄 Запуск бота...
+echo 🔄 Запуск бота... >> %logfile%
+
+:: Запускаем Python
+python smart_final_bot.py
+
+:: Сохраняем код ошибки
+set exit_code=%errorlevel%
+
+if %exit_code% equ 0 (
+    echo ✅ Бот завершился нормально: %date% %time%
     echo ✅ Бот завершился нормально: %date% %time% >> %logfile%
 ) else (
-    echo ❌ Бот завершился с ошибкой: %errorlevel% >> %logfile%
+    echo ❌ Бот завершился с ошибкой: %exit_code%
+    echo ❌ Бот завершился с ошибкой: %exit_code% >> %logfile%
 )
 
+echo 🔄 Перезапуск через 15 секунд...
 echo 🔄 Перезапуск через 15 секунд... >> %logfile%
 timeout /t 15 /nobreak > nul
 goto main_loop

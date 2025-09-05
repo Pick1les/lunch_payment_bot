@@ -13,6 +13,14 @@ SPREADSHEET_ID = "1B_u7XNX-tWurpxrHgQdJuFWWTwP3KW8kX7_VyuQzJwY"
 SHEET_NAME = "Меню"
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+# Настройки уведомлений
+NOTIFICATION_SETTINGS = {
+    'start_time': "10:20",
+    'end_time': "14:00",
+    'reminder_times': ["11:30", "13:00"],  # Фиксированное время напоминаний
+    'check_interval': 300  # 5 минут
+}
+
 # Реквизиты
 PAYMENT_DETAILS = {
     "bank": "Сбербанк",
@@ -176,8 +184,8 @@ def send_message(chat_id, text, reply_markup=None):
         if reply_markup:
             data["reply_markup"] = json.dumps(reply_markup)
         requests.post(f"{API_URL}/sendMessage", data=data, timeout=10)
-    except:
-        pass
+    except Exception as e:
+        print(f"⚠️ Ошибка отправки сообщения: {e}")
 
 def get_payment_message(amount=None):
     payment_text = (
@@ -192,8 +200,8 @@ def get_payment_message(amount=None):
     payment_text += "\n\n⚠️ Укажите комментарий к переводу!"
     return payment_text
 
-def format_order_message(order):
-    """Форматирует сообщение о заказе согласно структуре"""
+def format_order_message(order, notification_type="auto"):
+    """Форматирует сообщение о заказе с учетом типа уведомления"""
     message = f"🍽️ *Заказ для {order['fio']}:*\n\n"
     
     # Добавляем все компоненты в правильном порядке
@@ -212,7 +220,14 @@ def format_order_message(order):
     
     # Добавляем сумму
     message += f"\n💵 *Сумма: {order['price']} руб.*\n"
-    message += "💳 Оплатите до 14:00\n\n"
+    
+    # Добавляем текст в зависимости от типа уведомления
+    if notification_type == "reminder":
+        message += "⏰ *Напоминание:* оплатите до 14:00\n\n"
+    elif notification_type == "urgent":
+        message += "⚠️ *СРОЧНО:* последний шанс оплатить до 14:00!\n\n"
+    else:
+        message += "💳 Оплатите до 14:00\n\n"
     
     return message
 
@@ -234,7 +249,7 @@ def get_welcome_message():
         "📋 *Список команд:*\n\n"
         "📍 */start* - показать это сообщение\n"
         "📍 */register* - регистрация в системе\n"
-        "📍 */payment* - реквизиты для оплата\n"
+        "📍 */payment* - реквизиты для оплаты\n"
         "📍 */checkorders* - проверить сегодняшние заказы\n"
         "📍 */mystatus* - мой статус оплаты\n\n"
         "⚡ *Как это работает:*\n"
@@ -242,7 +257,7 @@ def get_welcome_message():
         "2. Указываете свои ФИО как в таблице\n"
         "3. Получаете уведомления о заказах\n"
         "4. Оплачиваете и нажимаете \"✅ Я оплатил\"\n\n"
-        "💡 Бот автоматически проверяет заказы каждые 5 минут!"
+        "💡 Бот автоматически проверяет заказы"
     )
 
 def should_send_notification():
@@ -269,12 +284,30 @@ def is_price_valid(price_str):
     except (ValueError, TypeError):
         return False
 
+def get_current_notification_type():
+    """Определяет тип уведомления based on current time"""
+    now = datetime.now()
+    current_time_str = now.strftime("%H:%M")
+    
+    if current_time_str == "11:30":
+        return "reminder"
+    elif current_time_str == "13:00":
+        return "urgent"
+    else:
+        return "auto"
+
 def check_orders_and_notify(parser, user_data, payments_data):
-    """Проверяет заказы и отправляет уведомления ТОЛЬКО если цена выставлена"""
+    """Проверяет заказы и отправляет уведомления с учетом типа"""
     try:
+        now = datetime.now()
+        current_time_str = now.strftime("%H:%M:%S")
+        notification_type = get_current_notification_type()
+        
+        print(f"⏰ Проверка в: {current_time_str}, тип: {notification_type}")
+        
         # Проверяем время перед отправкой уведомлений
         if not should_send_notification():
-            print("⏰ Сейчас не время для уведомлений (до 10:20 или после 14:00)")
+            print("⏰ Сейчас не время для уведомлений")
             return
             
         orders = parser.get_todays_orders()
@@ -284,11 +317,17 @@ def check_orders_and_notify(parser, user_data, payments_data):
             # Проверяем что заказ существует И цена выставлена
             if (order['has_order'] and is_price_valid(order['price'])):
                 
-                # Проверяем не отправляли ли уже уведомление сегодня
                 today = datetime.now().strftime("%Y-%m-%d")
                 order_key = f"{order['fio']}_{today}"
                 
-                if order_key in payments_data:
+                # Для фиксированных напоминаний проверяем, не отправляли ли уже этот тип
+                if notification_type in ["reminder", "urgent"]:
+                    if order_key in payments_data and payments_data[order_key].get('last_notification_type') == notification_type:
+                        print(f"⚠️ Уже отправляли {notification_type} для {order['fio']}")
+                        continue
+                
+                # Для авто-уведомлений проверяем общую отправку
+                elif order_key in payments_data:
                     print(f"⚠️ Уведомление уже отправлено: {order['fio']}")
                     continue
                 
@@ -298,28 +337,33 @@ def check_orders_and_notify(parser, user_data, payments_data):
                         user_info.get('fio') and 
                         user_info['fio'].lower() == order['fio'].lower()):
                         
-                        # Формируем сообщение
-                        message = format_order_message(order)
+                        # Формируем сообщение с учетом типа
+                        message = format_order_message(order, notification_type)
                         message += get_payment_message(order['price'])
                         
                         # Отправляем с кнопкой подтверждения
                         send_message(user_id, message, create_payment_keyboard())
                         
                         # Сохраняем факт отправки уведомления
-                        payments_data[order_key] = {
-                            "user_id": user_id,
-                            "fio": order['fio'],
-                            "amount": order['price'],
-                            "date": today,
-                            "paid": False
-                        }
+                        if order_key not in payments_data:
+                            payments_data[order_key] = {
+                                "user_id": user_id,
+                                "fio": order['fio'],
+                                "amount": order['price'],
+                                "date": today,
+                                "paid": False,
+                                "notifications_sent": 0
+                            }
+                        
+                        payments_data[order_key]['last_notification_type'] = notification_type
+                        payments_data[order_key]['last_notification_time'] = now.isoformat()
+                        payments_data[order_key]['notifications_sent'] += 1
                         
                         notified_count += 1
-                        print(f"📨 Отправлен заказ: {order['fio']} - {order['price']} руб.")
+                        print(f"📨 Отправлен {notification_type} для {order['fio']} - {order['price']} руб.")
                         break
             
             elif order['has_order'] and (not is_price_valid(order['price'])):
-                # Логируем заказы без цены (для отладки)
                 print(f"⏳ Заказ без цены: {order['fio']} - ожидание выставления цены")
         
         save_data(PAYMENTS_FILE, payments_data)
@@ -370,7 +414,9 @@ def handle_callback_query(update, user_data, payments_data):
         print(f"❌ Ошибка обработки callback: {e}")
 
 def main():
-    print("🚀 Умный бот запущен! С подтверждением оплаты.")
+    print("🚀 Умный бот запущен! С улучшенной системой уведомлений.")
+    print(f"⏰ Время уведомлений: {NOTIFICATION_SETTINGS['start_time']}-{NOTIFICATION_SETTINGS['end_time']}")
+    print(f"🔔 Напоминания в: {', '.join(NOTIFICATION_SETTINGS['reminder_times'])}")
     
     # Инициализируем парсер
     parser = SmartSheetParser()
@@ -385,15 +431,25 @@ def main():
     
     offset = None
     last_check = time.time()
+    last_reminder_check = time.time()
     
     try:
         while True:
             current_time = time.time()
+            now = datetime.now()
+            current_time_str = now.strftime("%H:%M")
             
             # Проверяем заказы каждые 5 минут
-            if current_time - last_check > 300 and parser.worksheet:
+            if current_time - last_check > NOTIFICATION_SETTINGS['check_interval'] and parser.worksheet:
                 check_orders_and_notify(parser, user_data, payments_data)
                 last_check = current_time
+            
+            # Отдельная проверка для фиксированных напоминаний
+            if current_time - last_reminder_check > 60:  # Проверяем каждую минуту
+                if current_time_str in NOTIFICATION_SETTINGS['reminder_times']:
+                    print(f"🔔 Время для напоминания: {current_time_str}")
+                    check_orders_and_notify(parser, user_data, payments_data)
+                last_reminder_check = current_time
             
             # Обработка сообщений и callback-ов
             response = requests.get(f"{API_URL}/getUpdates", 
@@ -435,11 +491,35 @@ def main():
                         elif text == "/checkorders":
                             if parser.worksheet:
                                 orders = parser.get_todays_orders()
-                                active_orders = len(orders)
-                                send_message(chat_id, f"📊 Заказов сегодня: {active_orders}")
-                                if active_orders > 0:
-                                    for order in orders[:active_orders]:
-                                        send_message(chat_id, f"• {order['fio']} - {order['price']} руб.")
+                                active_orders = [o for o in orders if o['has_order'] and is_price_valid(o['price'])]
+                                total_orders = len(orders)
+                                
+                                if active_orders:
+                                    # Сначала отправляем общую статистику
+                                    send_message(chat_id, f"📊 Все заказы на сегодня: {len(active_orders)}/{total_orders}")
+                                    
+                                    # Затем отправляем каждый заказ отдельным сообщением
+                                    for order in active_orders:
+                                        order_info = f"👤 {order['fio']} - {order['price']} руб.\n"
+                                        
+                                        # Добавляем информацию о блюдах
+                                        if order.get('first_dish'):
+                                            order_info += f"🥣 Первое: {order['first_dish']}\n"
+                                        if order.get('second_dish'):
+                                            order_info += f"🍖 Второе: {order['second_dish']}\n"
+                                        if order.get('garnish'):
+                                            order_info += f"🍚 Гарнир: {order['garnish']}\n"
+                                        if order.get('salad'):
+                                            order_info += f"🥗 Салат: {order['salad']}\n"
+                                        if order.get('comment'):
+                                            order_info += f"📝 Комментарий: {order['comment']}\n"
+                                        
+                                        send_message(chat_id, order_info)
+                                        
+                                        # Небольшая пауза между сообщениями
+                                        time.sleep(0.5)
+                                else:
+                                    send_message(chat_id, "📊 На сегодня заказов нет")
                             else:
                                 send_message(chat_id, "❌ Таблица не подключена")
                             
@@ -454,7 +534,8 @@ def main():
                                 if order_key in payments_data:
                                     status = "✅ Оплачено" if payments_data[order_key]['paid'] else "❌ Не оплачено"
                                     amount = payments_data[order_key]['amount']
-                                    send_message(chat_id, f"📊 Ваш статус: {status}\n💵 Сумма: {amount} руб.")
+                                    notifications = payments_data[order_key].get('notifications_sent', 0)
+                                    send_message(chat_id, f"📊 Ваш статус: {status}\n💵 Сумма: {amount} руб.\n📨 Уведомлений: {notifications}")
                                 else:
                                     send_message(chat_id, "📊 Заказа на сегодня нет")
                             else:
@@ -465,7 +546,6 @@ def main():
                             user_data[user_id]["step"] = "completed"
                             send_message(chat_id, f"✅ ФИО сохранено: {text}")
                             send_message(chat_id, "📩 Теперь вы будете получать уведомления о заказах!")
-                            send_message(chat_id, "💡 Используйте /mystatus для проверки статуса оплаты")
                             
                         else:
                             send_message(chat_id, "🤖 Неизвестная команда. Используйте /start для списка команд")
