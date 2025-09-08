@@ -28,7 +28,7 @@ echo 🔄 Запуск бота...
 echo 🔄 Запуск бота... >> %logfile%
 
 :: Запускаем Python
-python smart_final_bot.py
+python main.py
 
 :: Сохраняем код ошибки
 set exit_code=%errorlevel%

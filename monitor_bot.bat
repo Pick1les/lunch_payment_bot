@@ -7,7 +7,7 @@ if %errorlevel% equ 0 (
     echo ✅ Бот работает
 ) else (
     echo ❌ Бот не запущен! Запускаю...
-    start "" /min smart_final_bot.py
+    start "" /min main.py
 )
 
 :: Ждем 1 минуту перед следующей проверкой
