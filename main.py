@@ -137,7 +137,7 @@ class LunchBot:
             "📋 *Список команд:*\n\n"
             "📍 */start* - показать это сообщение\n"
             "📍 */register* - регистрация в системе\n"
-            "📍 */payment* - реквизиты для оплаты\n"
+            "📍 */payment* - реквизиты для оплата\n"
             "📍 */checkorders* - проверить сегодняшние заказы\n"
             "📍 */mystatus* - мой статус оплаты\n\n"
             "⚡ *Как это работает:*\n"
@@ -433,11 +433,13 @@ class LunchBot:
             else:
                 self.send_message(chat_id, "📋 Основное меню", self.create_main_keyboard())
             self.send_message(chat_id, self.get_welcome_message())
+            save_data(config.USER_DATA_FILE, self.user_data, self.encryptor)
             return
         
         # Обработка команды /main_menu для всех
         elif text == "/main_menu":
             self.send_message(chat_id, "📋 Основное меню", self.create_main_keyboard())
+            save_data(config.USER_DATA_FILE, self.user_data, self.encryptor)
             return
         
         # Обработка шага waiting_fio для всех
@@ -464,29 +466,39 @@ class LunchBot:
         
         # АДМИН-КОМАНДЫ (только для администраторов)
         if is_admin:
+            admin_commands_processed = False
+            
             if text == "/stats":
                 self.handle_stats_command(chat_id)
+                admin_commands_processed = True
                 
             elif text == "/users":
                 self.handle_users_command(chat_id)
+                admin_commands_processed = True
                 
             elif text == "/broadcast":
                 self.user_data[user_id]["step"] = "waiting_broadcast"
                 self.send_message(chat_id, "📢 Введите сообщение для рассылки:")
+                admin_commands_processed = True
                 
             elif text == "/backup":
                 self.handle_backup_command(chat_id)
+                admin_commands_processed = True
                 
             elif text == "/check_orders":
                 self.handle_check_orders_command(chat_id)
+                admin_commands_processed = True
                 
             elif text == "/notify_admin":
                 self.handle_notify_admin_command(chat_id)
+                admin_commands_processed = True
             
-            save_data(config.USER_DATA_FILE, self.user_data, self.encryptor)
-            return
+            # Если админская команда обработана, сохраняем данные и выходим
+            if admin_commands_processed:
+                save_data(config.USER_DATA_FILE, self.user_data, self.encryptor)
+                return
         
-        # ОБЫЧНЫЕ КОМАНДЫ ПОЛЬЗОВАТЕЛЕЙ (для всех)
+        # ОБЫЧНЫЕ КОМАНДЫ ПОЛЬЗОВАТЕЛЕЙ (для всех, включая администраторов)
         if text == "/register":
             self.user_data[user_id]["registered"] = True
             self.user_data[user_id]["step"] = "waiting_fio"
@@ -538,16 +550,36 @@ class LunchBot:
             if user_info.get('fio'):
                 today = datetime.now().strftime("%Y-%m-%d")
                 order_key = f"{user_info['fio']}_{today}"
+                
+                # ПРОВЕРЯЕМ СНАЧАЛА ЗАКАЗЫ ИЗ ТАБЛИЦЫ
+                orders = self.parser.get_todays_orders()
+                user_has_order = any(order['fio'].lower() == user_info['fio'].lower() 
+                                   for order in orders if order['has_order'])
+                
+                if not user_has_order:
+                    self.send_message(chat_id, "📊 Заказа на сегодня нет")
+                    return
+                    
+                # ЕСТЬ ЗАКАЗ - ПРОВЕРЯЕМ СТАТУС ОПЛАТЫ
                 if order_key in self.payments_data:
                     status = "✅ Оплачено" if self.payments_data[order_key]['paid'] else "❌ Не оплачено"
                     amount = self.payments_data[order_key]['amount']
                     notifications = self.payments_data[order_key].get('notifications_sent', 0)
                     self.send_message(chat_id, f"📊 Ваш статус: {status}\n💵 Сумма: {amount} руб.\n📨 Уведомлений: {notifications}")
                 else:
-                    self.send_message(chat_id, "📊 Заказа на сегодня нет")
+                    # ЗАКАЗ ЕСТЬ, НО ОПЛАТА ЕЩЕ НЕ ОБРАБОТАНА
+                    order_info = next((order for order in orders 
+                                     if order['fio'].lower() == user_info['fio'].lower() 
+                                     and order['has_order']), None)
+                    if order_info:
+                        self.send_message(chat_id, 
+                            f"📊 Заказ есть!\n"
+                            f"💵 Сумма: {order_info['price']} руб.\n"
+                            f"📝 Статус: Ожидает оплаты\n\n"
+                            f"💳 Используйте /payment для реквизитов")
             else:
                 self.send_message(chat_id, "❌ Сначала зарегистрируйтесь /register")
-        
+            
         else:
             self.send_message(chat_id, "🤖 Неизвестная команда. Используйте /start для списка команд")
         
