@@ -236,7 +236,7 @@ def create_payment_keyboard():
     return {
         "inline_keyboard": [[
             {
-                "text": "✅ Я оплатил",
+                "text": "✅ Я оплатил(а)",
                 "callback_data": "payment_confirmed"
             }
         ]]
@@ -249,7 +249,7 @@ def get_welcome_message():
         "📋 *Список команд:*\n\n"
         "📍 */start* - показать это сообщение\n"
         "📍 */register* - регистрация в системе\n"
-        "📍 */payment* - реквизиты для оплаты\n"
+        "📍 */payment* - реквизиты для оплата\n"
         "📍 */checkorders* - проверить сегодняшние заказы\n"
         "📍 */mystatus* - мой статус оплаты\n\n"
         "⚡ *Как это работает:*\n"
@@ -319,6 +319,10 @@ def check_orders_and_notify(parser, user_data, payments_data):
                 
                 today = datetime.now().strftime("%Y-%m-%d")
                 order_key = f"{order['fio']}_{today}"
+                
+                if order_key in payments_data and payments_data[order_key].get('paid'):
+                    print(f"✅ Заказ уже оплачен, пропускаем: {order['fio']}")
+                    continue
                 
                 # Для фиксированных напоминаний проверяем, не отправляли ли уже этот тип
                 if notification_type in ["reminder", "urgent"]:
