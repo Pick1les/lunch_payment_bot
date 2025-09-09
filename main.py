@@ -163,7 +163,7 @@ class LunchBot:
         now = datetime.now()
         current_time_str = now.strftime("%H:%M")
         
-        if current_time_str == "11:30":
+        if current_time_str == "11:49":
             return "reminder"
         elif current_time_str == "13:00":
             return "urgent"
@@ -185,20 +185,24 @@ class LunchBot:
                     today = datetime.now().strftime("%Y-%m-%d")
                     order_key = f"{order['fio']}_{today}"
                     
+                    # ПРОВЕРКА 1: ЕСЛИ УЖЕ ОПЛАЧЕНО - ПРОПУСКАЕМ ДЛЯ ВСЕХ ТИПОВ УВЕДОМЛЕНИЙ
                     if order_key in self.payments_data and self.payments_data[order_key].get('paid'):
                         logger.info(f"✅ Заказ уже оплачен: {order['fio']}")
                         continue
                     
                     notification_type = self.get_current_notification_type()
                     
+                    # ПРОВЕРКА 2: ДЛЯ РАЗНЫХ ТИПОВ УВЕДОМЛЕНИЙ
                     if notification_type in ["reminder", "urgent"]:
+                        # Для напоминаний проверяем, не отправляли ли уже ЭТОТ ТИП уведомления
                         if order_key in self.payments_data and self.payments_data[order_key].get('last_notification_type') == notification_type:
                             logger.info(f"⚠️ Уже отправляли {notification_type} для {order['fio']}")
                             continue
-                    
-                    elif order_key in self.payments_data:
-                        logger.info(f"⚠️ Уведомление уже отправлено: {order['fio']}")
-                        continue
+                    else:
+                        # Для обычных уведомлений проверяем, отправляли ли вообще какое-либо уведомление
+                        if order_key in self.payments_data:
+                            logger.info(f"⚠️ Уведомление уже отправлено: {order['fio']}")
+                            continue
                     
                     for user_id, user_info in self.user_data.items():
                         if (user_info.get('registered') and user_info.get('fio') and 

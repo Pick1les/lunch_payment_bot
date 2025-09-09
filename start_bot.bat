@@ -5,7 +5,10 @@ title Lunch Payment Bot Server
 echo 🚀 Запуск Lunch Payment Bot Server...
 echo.
 
+:: Создаем необходимые папки
 if not exist logs mkdir logs
+if not exist data mkdir data
+if not exist backups mkdir backups
 
 for /f "tokens=1-3 delims=/" %%a in ("%date%") do (
     set day=%%a
@@ -27,8 +30,8 @@ echo =======================================
 echo 🔄 Запуск бота...
 echo 🔄 Запуск бота... >> %logfile%
 
-:: Запускаем Python
-python main.py
+:: ЗАПУСКАЕМ ИСПОЛНЯЕМЫЙ ФАЙЛ, А НЕ Python скрипт!
+LunchBot.exe
 
 :: Сохраняем код ошибки
 set exit_code=%errorlevel%

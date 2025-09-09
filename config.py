@@ -1,4 +1,3 @@
-# config.py
 import os
 from dotenv import load_dotenv
 from typing import List
@@ -63,5 +62,4 @@ class Config:
         "/check_orders - Принудительная проверка заказов"
     ]
 
-# Создаем глобальный экземпляр конфига
 config = Config()
